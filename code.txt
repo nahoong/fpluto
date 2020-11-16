@@ -1,0 +1,92 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using Prison.Pfile;
+using Prison.Work;
+
+namespace winform_DLL_test
+{
+    public partial class Form1 : Form
+    {
+        public Prison_Task_Manager tskManager = new Prison_Task_Manager();
+        public Prison_Task_Background bw = null;
+        public Form1()
+        {
+            InitializeComponent();
+            bw = new Prison_Task_Background("Check_State", this, update, 300);
+            bw.Start();
+        }
+        void update()
+        {
+            switch (tskManager.Get_status("run_notepad"))
+            {
+                case Prison_DoWork.DoWorkStatus.Init:
+                    button_init.BackColor = Color.Green;
+                    break;
+                case Prison_DoWork.DoWorkStatus.Running:
+                    button_running.BackColor = Color.Green;
+                    break;
+                case Prison_DoWork.DoWorkStatus.Completed:
+                    button_terminate.BackColor = Color.Green;
+                    break;
+                default:
+                    button_init.BackColor = Color.Yellow;
+                    button_running.BackColor = Color.Yellow;
+                    button_terminate.BackColor = Color.Yellow;
+                    break;
+            }
+        }
+        private void button1_Click(object sender, EventArgs e)
+        {
+            //task_a();
+            task_b();
+            //CancelANonCancellableTaskAsync();
+        }
+        public void task_a()
+        {
+            task1 task_1 = new task1(@"cmd.exe", @"/C notepad.exe", -1);
+            task1 task_2 = new task1(@"C:\Users\LG-User\AppData\Local\Programs\Python\Python37\python.exe", @"D:/Documents/work/LG_LIFE/python_test/test/test3.py", 15000);
+            Task_Files tf = new Task_Files("Read_text_lines_n", @"D:/Documents/work/LG_LIFE/python_test/test/test3.py,2", -1);
+            if (tskManager.Add_Task("run_notepad", tf))
+            {
+                tf.success_event += (sender, e) => { task_done("run_notepad"); };
+                tskManager.Run_Task("run_notepad");
+            }
+            else
+            {
+                tskManager.Run_Task("run_notepad");
+            }
+        }
+        public void task_b()
+        {
+            task1 task_1 = new task1(@"1", @"I am task1", -1);
+            task1 task_2 = new task1(@"2", @"I am task2", -1);
+            if (tskManager.Add_Task("1", task_1))
+            {
+                task_1.success_event += (sender, e) => { task_done("1"); };
+                tskManager.Run_Task("1");
+            }
+            if (tskManager.Add_Task("2", task_2))
+            {
+                task_2.success_event += (sender, e) => { task_done("2"); };
+                tskManager.Run_Task("2");
+            }
+
+        }
+        public void task_done(string id)
+        {
+            textBox1.Text += tskManager.Get_Task_result(id);
+        }
+        private void button2_Click(object sender, EventArgs e)
+        {
+            tskManager.Cancel_Task("run_notepad");
+        }
+    }
+}
